@@ -47,6 +47,7 @@ public class PushPlugin extends CordovaPlugin implements PushConstants {
   private static boolean gForeground = false;
 
   private static String registration_id = "";
+  private List<String> senderIdList = new ArrayList<>(); // List sender ids
 
   /**
    * Gets the application context from cordova's main activity.
@@ -185,27 +186,21 @@ public class PushPlugin extends CordovaPlugin implements PushConstants {
           try {
             jo = data.getJSONObject(0).getJSONObject(ANDROID);
 
+            // Get sender id from config
+            senderID = data.getJSONObject(0).getString(SENDER_ID);
+            senderIdList.add(senderID);
+
             // If no NotificationChannels exist create the default one
             createDefaultNotificationChannelIfNeeded(jo);
 
             Log.v(LOG_TAG, "execute: jo=" + jo.toString());
 
-            senderID = getStringResourceByName(GCM_DEFAULT_SENDER_ID);
-
             Log.v(LOG_TAG, "execute: senderID=" + senderID);
 
             try {
-              token = FirebaseInstanceId.getInstance().getToken();
+              token = FirebaseInstanceId.getInstance().getToken(senderID, FCM);
             } catch (IllegalStateException e) {
               Log.e(LOG_TAG, "Exception raised while getting Firebase token " + e.getMessage());
-            }
-
-            if (token == null) {
-              try {
-                token = FirebaseInstanceId.getInstance().getToken(senderID, FCM);
-              } catch (IllegalStateException e) {
-                Log.e(LOG_TAG, "Exception raised while getting Firebase token " + e.getMessage());
-              }
             }
 
             if (!"".equals(token)) {
@@ -257,7 +252,7 @@ public class PushPlugin extends CordovaPlugin implements PushConstants {
             editor.putBoolean(CLEAR_BADGE, clearBadge);
             editor.putBoolean(CLEAR_NOTIFICATIONS, jo.optBoolean(CLEAR_NOTIFICATIONS, true));
             editor.putBoolean(FORCE_SHOW, jo.optBoolean(FORCE_SHOW, false));
-            editor.putString(SENDER_ID, senderID);
+            editor.putString(SENDER_ID, TextUtils.join(",", senderIdList)); // Listen all sender ids
             editor.putString(MESSAGE_KEY, jo.optString(MESSAGE_KEY));
             editor.putString(TITLE_KEY, jo.optString(TITLE_KEY));
             editor.commit();

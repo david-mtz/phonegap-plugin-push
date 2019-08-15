@@ -941,10 +941,10 @@ public class FCMService extends FirebaseMessagingService implements PushConstant
   private boolean isAvailableSender(String from) {
     SharedPreferences sharedPref = getApplicationContext().getSharedPreferences(PushPlugin.COM_ADOBE_PHONEGAP_PUSH,
         Context.MODE_PRIVATE);
-    String savedSenderID = sharedPref.getString(SENDER_ID, "");
+    String savedSenderIDs = sharedPref.getString(SENDER_ID, "");
 
-    Log.d(LOG_TAG, "sender id = " + savedSenderID);
-
-    return from.equals(savedSenderID) || from.startsWith("/topics/");
+    Log.d(LOG_TAG, "sender id = " + savedSenderIDs);
+    // Compare to list of sender ids
+    return (savedSenderIDs.indexOf(from) == -1 ? false : true)  || from.startsWith("/topics/");
   }
 }
