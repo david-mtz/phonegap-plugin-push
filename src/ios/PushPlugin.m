@@ -53,26 +53,29 @@
 
 -(void)initRegistration;
 {
-    NSString * registrationToken = [[FIRInstanceID instanceID] token];
-
-    if (registrationToken != nil) {
-        NSLog(@"FCM Registration Token: %@", registrationToken);
-        [self setFcmRegistrationToken: registrationToken];
-
-        id topics = [self fcmTopics];
-        if (topics != nil) {
-            for (NSString *topic in topics) {
-                NSLog(@"subscribe to topic: %@", topic);
-                id pubSub = [FIRMessaging messaging];
-                [pubSub subscribeToTopic:topic];
+    [[FIRInstanceID instanceID] tokenWithAuthorizedEntity:fcmSenderId scope:@"*" options:nil handler:^(NSString * _Nullable token, NSError * _Nullable error) {
+        NSLog(@"Global SenderID: %@", fcmSenderId);
+        NSLog(@"initRegistration token: %@", token);
+        NSLog(@"initRegistration error: %@", error);
+        if (token != nil) {
+            NSLog(@"Global SenderID: %@", fcmSenderId);
+            NSLog(@"FCM Registration Token: %@", token);
+            [self setFcmRegistrationToken: token];
+            
+            id topics = [self fcmTopics];
+            if (topics != nil) {
+                for (NSString *topic in topics) {
+                    NSLog(@"subscribe to topic: %@", topic);
+                    id pubSub = [FIRMessaging messaging];
+                    [pubSub subscribeToTopic:topic];
+                }
             }
+            
+            [self registerWithToken: token];
+        } else {
+            NSLog(@"FCM token is null");
         }
-
-        [self registerWithToken:registrationToken];
-    } else {
-        NSLog(@"FCM token is null");
-    }
-
+    }];
 }
 
 //  FCM refresh token
@@ -161,6 +164,8 @@
 {
     NSMutableDictionary* options = [command.arguments objectAtIndex:0];
     NSMutableDictionary* iosOptions = [options objectForKey:@"ios"];
+    NSMutableDictionary* senderID = [options objectForKey:@"senderID"];
+
     id voipArg = [iosOptions objectForKey:@"voip"];
     if (([voipArg isKindOfClass:[NSString class]] && [voipArg isEqualToString:@"true"]) || [voipArg boolValue]) {
         [self.commandDelegate runInBackground:^ {
@@ -297,7 +302,12 @@
 
             // Load the file content and read the data into arrays
             NSDictionary *dict = [[NSDictionary alloc] initWithContentsOfFile:path];
-            fcmSenderId = [dict objectForKey:@"GCM_SENDER_ID"];
+
+            if ([senderID isKindOfClass:[NSString class]]) {
+                fcmSenderId = senderID;
+                NSLog(@"FCM Sender ID desde parametros: %@", senderID);
+            }
+
             BOOL isGcmEnabled = [[dict valueForKey:@"IS_GCM_ENABLED"] boolValue];
 
             NSLog(@"FCM Sender ID %@", fcmSenderId);
