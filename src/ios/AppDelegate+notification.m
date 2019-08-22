@@ -197,7 +197,7 @@ NSString *const pushPluginApplicationDidBecomeActiveNotification = @"pushPluginA
     pushHandler.isInline = YES;
     [pushHandler notificationReceived];
 
-    completionHandler(UNNotificationPresentationOptionNone);
+    completionHandler(UNNotificationPresentationOptionAlert);
 }
 
 - (void)userNotificationCenter:(UNUserNotificationCenter *)center
@@ -214,7 +214,7 @@ didReceiveNotificationResponse:(UNNotificationResponse *)response
         case UIApplicationStateActive:
         {
             PushPlugin *pushHandler = [self getCommandInstance:@"PushNotification"];
-            pushHandler.notificationMessage = userInfo;
+            pushHandler.notificationMessage = response.notification.request.content.userInfo
             pushHandler.isInline = NO;
             [pushHandler notificationReceived];
             completionHandler();
